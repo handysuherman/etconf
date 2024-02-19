@@ -1,5 +1,12 @@
 
 
+## [0.1.1](https://github.com/handysuherman/etconf/compare/0.1.0...0.1.1) (2024-02-19)
+
+
+### Bug Fixes
+
+* update still not encode tls ([54fba32](https://github.com/handysuherman/etconf/commit/54fba32c9ad36248979299a4959b3045d5fa4edb))
+
 ## [0.1.0](https://github.com/handysuherman/etconf/compare/0.0.1...0.1.0) (2024-02-19)
 
 
