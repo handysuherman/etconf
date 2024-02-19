@@ -31,7 +31,7 @@ type parser struct {
 	etcdClient *clientv3.Client
 }
 
-func NewParser(
+func New(
 	cfg *Config,
 	etcdClient *clientv3.Client,
 ) *parser {

@@ -190,7 +190,7 @@ func (exec *config) run() error {
 		Output:            exec.cfg.Output,
 		OutputFilePath:    exec.cfg.OutputFilePath,
 	}
-	parser := parser.NewParser(parserCfg, exec.etcdClient)
+	parser := parser.New(parserCfg, exec.etcdClient)
 
 	if exec.cfg.Update {
 		if err := parser.Update(configData); err != nil {
