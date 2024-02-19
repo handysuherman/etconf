@@ -4,3 +4,5 @@ Makefile
 *.pem
 /node_modules
 config.yaml
+config-cli.yaml
+etcd-config.yaml
