@@ -1,5 +1,12 @@
 
 
+## [0.1.2](https://github.com/handysuherman/etconf/compare/0.1.1...0.1.2) (2024-02-19)
+
+
+### Refactoring Code
+
+* remove unused updateTLSKey method ([a261d03](https://github.com/handysuherman/etconf/commit/a261d03c3a73b4f59421c7ef767a041735029723))
+
 ## [0.1.1](https://github.com/handysuherman/etconf/compare/0.1.0...0.1.1) (2024-02-19)
 
 
