@@ -197,15 +197,6 @@ func (p *parser) updateFlatKey(configData map[interface{}]interface{}, key strin
 	return util.UpdateKeyContent(p.etcdClient, configData[key], fmt.Sprintf("%s/%s", p.cfg.EtcdPrefix, strings.ToLower(key)), key)
 }
 
-func (p *parser) updateTLSKey(configData map[interface{}]interface{}, key, nestedKey string) error {
-	tlsYAML, ok := configData[nestedKey].(map[interface{}]interface{})
-	if !ok {
-		return fmt.Errorf("specified update key '%s' s not under '%s' root level", key, p.cfg.TLSRootLevel)
-	}
-
-	return util.UpdateKeyContent(p.etcdClient, tlsYAML[nestedKey], fmt.Sprintf("%s/%s/%s", p.cfg.EtcdPrefix, p.cfg.TLSRootLevel, strings.ToLower(nestedKey)), key)
-}
-
 func (p *parser) encodeTLS(
 	tlsYAML map[interface{}]interface{},
 	targetKey string,
@@ -238,7 +229,6 @@ func (p *parser) encodeTLS(
 			return nil, err
 		}
 
-		// resultYAML[targetKey] = etcdKey
 		fmt.Printf("Updated TLS YAML content stored in etcd key: %s\n", etcdKey)
 	}
 
