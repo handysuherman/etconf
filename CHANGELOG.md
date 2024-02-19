@@ -1,5 +1,13 @@
 
 
+## [0.1.3](https://github.com/handysuherman/etconf/compare/0.1.2...0.1.3) (2024-02-19)
+
+
+### Refactoring Code
+
+* parser constructor name ([ae426b3](https://github.com/handysuherman/etconf/commit/ae426b3c572de3d48ffa836390a86076afa03bb1))
+* updateNested etcdKey ([e69b1bb](https://github.com/handysuherman/etconf/commit/e69b1bbf2311980c098d8f4ee0966bddfefd93d3))
+
 ## [0.1.2](https://github.com/handysuherman/etconf/compare/0.1.1...0.1.2) (2024-02-19)
 
 
