@@ -177,11 +177,13 @@ func (p *parser) updateNestedKey(configData map[interface{}]interface{}, key str
 
 	for k, value := range anyYAML {
 		if k == nestedKeys[1] {
-			err := util.UpdateKeyContent(p.etcdClient, value, fmt.Sprintf("%s/%s/%s", p.cfg.EtcdPrefix, nestedKeys[0], strings.ToLower(k.(string))), strings.ToLower(k.(string)))
+			etcdKey := fmt.Sprintf("%s/%s/%s", p.cfg.EtcdPrefix, nestedKeys[0], strings.ToLower(k.(string)))
+			err := util.UpdateKeyContent(p.etcdClient, value, etcdKey, strings.ToLower(k.(string)))
 			if err != nil {
 				return err
 			}
-			fmt.Printf("Updated TLS YAML content stored in etcd key: %s\n", fmt.Sprintf("%s/%s/%s", p.cfg.EtcdPrefix, nestedKeys[0], strings.ToLower(k.(string))))
+
+			fmt.Printf("Updated TLS YAML content stored in etcd key: %s\n", etcdKey)
 			return nil
 		}
 	}
