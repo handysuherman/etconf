@@ -41,8 +41,8 @@ func NewParser(
 	}
 }
 
-func (p *parser) Parse(configData map[interface{}]interface{}) error {
-	rootKeysYAML, err := p.create(configData, p.etcdClient)
+func (p *parser) Create(configData map[interface{}]interface{}) error {
+	rootKeysYAML, err := p.createKey(configData)
 	if err != nil {
 		return fmt.Errorf("error unmarshalling YAML content: %v", err)
 	}
@@ -63,7 +63,19 @@ func (p *parser) Parse(configData map[interface{}]interface{}) error {
 	return nil
 }
 
-func (p *parser) create(configData map[interface{}]interface{}, etcdClient *clientv3.Client) (map[string]interface{}, error) {
+func (p *parser) Update(configData map[interface{}]interface{}) error {
+	keysToUpdate := strings.Split(p.cfg.UpdateConfigKeys, ",")
+	for _, key := range keysToUpdate {
+		if err := p.updateKey(configData, key); err != nil {
+			return err
+		}
+	}
+
+	fmt.Println("configuration updated in etcd.")
+	return nil
+}
+
+func (p *parser) createKey(configData map[interface{}]interface{}) (map[string]interface{}, error) {
 	configurationsYAML := make(map[string]interface{})
 	tlsConfigYAML := make(map[string]interface{})
 
@@ -82,7 +94,7 @@ func (p *parser) create(configData map[interface{}]interface{}, etcdClient *clie
 				for nkey, nvalue := range dbYAML {
 					etcdKey := fmt.Sprintf("%s/%s/%s", p.cfg.EtcdPrefix, strings.ToLower(key.(string)), strings.ToLower(nkey.(string)))
 
-					if err := p.updateKeyContent(nvalue, etcdKey, nkey.(string)); err != nil {
+					if err := util.UpdateKeyContent(p.etcdClient, nvalue, etcdKey, nkey.(string)); err != nil {
 						return nil, err
 					}
 
@@ -92,7 +104,7 @@ func (p *parser) create(configData map[interface{}]interface{}, etcdClient *clie
 			}
 		default:
 			etcdKey := fmt.Sprintf("%s/%s", p.cfg.EtcdPrefix, strings.ToLower(key.(string)))
-			if err := p.updateKeyContent(value, etcdKey, key.(string)); err != nil {
+			if err := util.UpdateKeyContent(p.etcdClient, value, etcdKey, key.(string)); err != nil {
 				return nil, err
 			}
 
@@ -136,6 +148,64 @@ func (p *parser) create(configData map[interface{}]interface{}, etcdClient *clie
 	return rootKeysYAML, nil
 }
 
+func (p *parser) updateKey(configData map[interface{}]interface{}, key string) error {
+	nestedKeys := strings.Split(key, ".")
+	if _, ok := configData[nestedKeys[0]]; !ok {
+		return fmt.Errorf("specified update key '%s' does not exist", key)
+	}
+
+	if len(nestedKeys) >= 2 {
+		return p.updateNestedKey(configData, key, nestedKeys)
+	}
+
+	return p.updateFlatKey(configData, key)
+}
+
+func (p *parser) updateNestedKey(configData map[interface{}]interface{}, key string, nestedKeys []string) error {
+	if p.cfg.TLSRootLevel == nestedKeys[0] {
+		if tlsYAML, ok := configData[nestedKeys[0]].(map[interface{}]interface{}); ok {
+			_, err := p.encodeTLS(tlsYAML, nestedKeys[1], nil)
+			return err
+		}
+		return fmt.Errorf("specified update key '%s' is not under 'tls' root level", key)
+	}
+
+	anyYAML, ok := configData[nestedKeys[0]].(map[interface{}]interface{})
+	if !ok {
+		return fmt.Errorf("specified update key '%s' is not under '%s' root level", key, nestedKeys[0])
+	}
+
+	for k, value := range anyYAML {
+		if k == nestedKeys[1] {
+			err := util.UpdateKeyContent(p.etcdClient, value, fmt.Sprintf("%s/%s/%s", p.cfg.EtcdPrefix, nestedKeys[0], strings.ToLower(k.(string))), strings.ToLower(k.(string)))
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Updated TLS YAML content stored in etcd key: %s\n", fmt.Sprintf("%s/%s/%s", p.cfg.EtcdPrefix, nestedKeys[0], strings.ToLower(k.(string))))
+			return nil
+		}
+	}
+
+	return fmt.Errorf("specified update key '%s' does not exist", key)
+}
+
+func (p *parser) updateFlatKey(configData map[interface{}]interface{}, key string) error {
+	if _, ok := configData[key]; ok {
+		return fmt.Errorf("specified update key '%s' does not exist", key)
+	}
+
+	return util.UpdateKeyContent(p.etcdClient, configData[key], fmt.Sprintf("%s/%s", p.cfg.EtcdPrefix, strings.ToLower(key)), key)
+}
+
+func (p *parser) updateTLSKey(configData map[interface{}]interface{}, key, nestedKey string) error {
+	tlsYAML, ok := configData[nestedKey].(map[interface{}]interface{})
+	if !ok {
+		return fmt.Errorf("specified update key '%s' s not under '%s' root level", key, p.cfg.TLSRootLevel)
+	}
+
+	return util.UpdateKeyContent(p.etcdClient, tlsYAML[nestedKey], fmt.Sprintf("%s/%s/%s", p.cfg.EtcdPrefix, p.cfg.TLSRootLevel, strings.ToLower(nestedKey)), key)
+}
+
 func (p *parser) encodeTLS(
 	tlsYAML map[interface{}]interface{},
 	targetKey string,
@@ -143,67 +213,34 @@ func (p *parser) encodeTLS(
 ) (map[string]interface{}, error) {
 	if targetKey == "" {
 		for key, service := range tlsYAML {
-			etcdKey, err := p.paths(service, key.(string))
+			etcdKey, value, err := util.Paths(service, p.cfg.EtcdPrefix, p.cfg.TLSRootLevel, key.(string))
 			if err != nil {
 				return nil, err
 			}
+			if err := util.UpdateKeyContent(p.etcdClient, value, etcdKey, key.(string)); err != nil {
+				return nil, err
+			}
+
 			resultYAML[key.(string)] = etcdKey
 			fmt.Printf("Updated TLS YAML content stored in etcd key: %s\n", etcdKey)
 		}
+
+		return resultYAML, nil
 	}
 
 	if service, ok := tlsYAML[targetKey]; ok {
-		etcdKey, err := p.paths(service, targetKey)
+		etcdKey, value, err := util.Paths(service, p.cfg.EtcdPrefix, p.cfg.TLSRootLevel, targetKey)
 		if err != nil {
 			return nil, err
 		}
-		resultYAML[targetKey] = etcdKey
+
+		if err := util.UpdateKeyContent(p.etcdClient, value, etcdKey, targetKey); err != nil {
+			return nil, err
+		}
+
+		// resultYAML[targetKey] = etcdKey
 		fmt.Printf("Updated TLS YAML content stored in etcd key: %s\n", etcdKey)
 	}
 
 	return resultYAML, nil
-}
-
-func (p *parser) paths(
-	value interface{},
-	key string,
-) (string, error) {
-	servicePaths, ok := value.(map[interface{}]interface{})
-	if !ok {
-		return "", fmt.Errorf("invalid YAML structure for service")
-	}
-
-	for pathKey, path := range servicePaths {
-		pathStr, ok := path.(string)
-		if !ok {
-			return "", fmt.Errorf("invalid YAML structure for path %s", pathKey)
-		}
-
-		encodedContent, err := util.Base64EncodeFile(pathStr)
-		if err != nil {
-			return "", err
-		}
-
-		servicePaths[pathKey] = encodedContent
-	}
-
-	etcdKey := fmt.Sprintf("%s/%s/%s", p.cfg.EtcdPrefix, p.cfg.TLSRootLevel, key)
-	if err := p.updateKeyContent(servicePaths, etcdKey, key); err != nil {
-		return "", err
-	}
-
-	return etcdKey, nil
-}
-
-func (p *parser) updateKeyContent(value interface{}, etcdKey, key string) error {
-	contentData, err := yaml.Marshal(map[interface{}]interface{}{key: value})
-	if err != nil {
-		return err
-	}
-
-	if err := util.UpdateToEtcd(p.etcdClient, etcdKey, string(contentData)); err != nil {
-		return err
-	}
-
-	return nil
 }

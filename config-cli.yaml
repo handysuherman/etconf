@@ -9,5 +9,5 @@ etcd-hosts: "https://constantinopel.go-webserver.server:2379"
 etcd-prefix: "configurations/reader-app"
 output: true
 output-file-path: "./etcd-configs-root.yaml"
-# update: true
-# update-keys: databases.mariadb,tls.mariadb,tls.redis
+update: true
+update-keys: databases.mariadb,tls.mariadb,tls.redis
