@@ -3,3 +3,4 @@ Makefile
 /tls
 *.pem
 /node_modules
+config.yaml
