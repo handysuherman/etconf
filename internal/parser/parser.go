@@ -183,7 +183,7 @@ func (p *parser) updateNestedKey(configData map[interface{}]interface{}, key str
 				return err
 			}
 
-			fmt.Printf("Updated TLS YAML content stored in etcd key: %s\n", etcdKey)
+			fmt.Printf("updated nested content stored in etcd key: %s\n", etcdKey)
 			return nil
 		}
 	}
@@ -196,7 +196,14 @@ func (p *parser) updateFlatKey(configData map[interface{}]interface{}, key strin
 		return fmt.Errorf("specified update key '%s' does not exist", key)
 	}
 
-	return util.UpdateKeyContent(p.etcdClient, configData[key], fmt.Sprintf("%s/%s", p.cfg.EtcdPrefix, strings.ToLower(key)), key)
+	etcdKey := fmt.Sprintf("%s/%s", p.cfg.EtcdPrefix, strings.ToLower(key))
+	err := util.UpdateKeyContent(p.etcdClient, configData[key], etcdKey, key)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("updated flat content stored in etcd key: %s\n", etcdKey)
+	return nil
 }
 
 func (p *parser) encodeTLS(
