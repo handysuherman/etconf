@@ -1,5 +1,17 @@
 
 
+## [0.1.4](https://github.com/handysuherman/etconf/compare/0.1.3...0.1.4) (2024-02-24)
+
+
+### Bug Fixes
+
+* updateFlatKey ([65f660d](https://github.com/handysuherman/etconf/commit/65f660db571471a2fbc81c88aa1464c09746edb5))
+
+
+### Refactoring Code
+
+* ignore files ([1817473](https://github.com/handysuherman/etconf/commit/181747368bc5ad7abae8c4064d20fde05d0617f5))
+
 ## [0.1.3](https://github.com/handysuherman/etconf/compare/0.1.2...0.1.3) (2024-02-19)
 
 
