@@ -192,7 +192,7 @@ func (p *parser) updateNestedKey(configData map[interface{}]interface{}, key str
 }
 
 func (p *parser) updateFlatKey(configData map[interface{}]interface{}, key string) error {
-	if _, ok := configData[key]; ok {
+	if _, ok := configData[key]; !ok {
 		return fmt.Errorf("specified update key '%s' does not exist", key)
 	}
 
