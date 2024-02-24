@@ -1,5 +1,12 @@
 
 
+## [0.1.5](https://github.com/handysuherman/etconf/compare/0.1.4...0.1.5) (2024-02-24)
+
+
+### Refactoring Code
+
+* logs when updating flatKey ([42b3ce1](https://github.com/handysuherman/etconf/commit/42b3ce141077c476be4b7c8f14c44a87b096cea5))
+
 ## [0.1.4](https://github.com/handysuherman/etconf/compare/0.1.3...0.1.4) (2024-02-24)
 
 
