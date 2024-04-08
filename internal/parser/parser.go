@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -128,8 +129,14 @@ func (p *parser) createKey(configData map[interface{}]interface{}) (map[string]i
 		return nil, fmt.Errorf("error while encoding etcd key: %v", err)
 	}
 
+	nonce, err := util.Chacha20Poly1305Nonce()
+	if err != nil {
+		return nil, fmt.Errorf("error while retrieving nonce: %v", err)
+	}
+
 	rootKeysYAML := map[string]interface{}{
 		"etcd": map[string]interface{}{
+			"nonce":  base64.StdEncoding.EncodeToString(nonce),
 			"hosts":  strings.Split(p.cfg.EtcdHosts, ","),
 			"prefix": p.cfg.EtcdPrefix,
 			"keys": map[string]interface{}{

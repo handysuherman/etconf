@@ -2,8 +2,10 @@ package util
 
 import (
 	"context"
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -13,6 +15,7 @@ import (
 
 const (
 	timeoutDur = 15 * time.Second
+	nonceSize  = 12
 )
 
 func Base64EncodeFile(path string) (string, error) {
@@ -59,6 +62,15 @@ func Paths(
 
 	etcdKey := fmt.Sprintf("%s/%s/%s", etcdPrefix, tlsRootLevel, key)
 	return etcdKey, servicePaths, nil
+}
+
+func Chacha20Poly1305Nonce() ([]byte, error) {
+	nonce := make([]byte, nonceSize)
+	_, err := io.ReadFull(rand.Reader, nonce)
+	if err != nil {
+		return nil, err
+	}
+	return nonce, nil
 }
 
 func UpdateKeyContent(etcdClient *clientv3.Client, value interface{}, etcdKey, key string) error {
