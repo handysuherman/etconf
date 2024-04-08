@@ -1,5 +1,12 @@
 
 
+## [0.2.0](https://github.com/handysuherman/etconf/compare/0.1.5...0.2.0) (2024-04-08)
+
+
+### Features
+
+* add etcd nonce for more scalability security ([ffd05a0](https://github.com/handysuherman/etconf/commit/ffd05a0024a3cec6b36d6436084d874b45790030))
+
 ## [0.1.5](https://github.com/handysuherman/etconf/compare/0.1.4...0.1.5) (2024-02-24)
 
 
